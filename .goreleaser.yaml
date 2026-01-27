@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: jb-embed
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: macos
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+  - id: windows
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+  # Linux builds need cross-compilation toolchain for CGO
+  # For now, skip Linux in local builds - use GitHub Actions later
+  # - id: linux
+  #   env:
+  #     - CGO_ENABLED=1
+  #   goos:
+  #     - linux
+  #   goarch:
+  #     - amd64
+  #     - arm64
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - embed.py
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  header: |
+    ## jb-embed {{ .Version }}
+    
+    Local embedding service powered by [jumpboot](https://github.com/richinsley/jumpboot) and sentence-transformers.
+    
+    ### First Run
+    On first run, jb-embed will bootstrap a Python environment with sentence-transformers.
+    This takes a few minutes but only happens once.
+    
+    ### Quick Start
+    ```bash
+    # CLI mode
+    ./jb-embed "hello world"
+    
+    # Server mode (for network deployment)
+    ./jb-embed serve --port 8420
+    ```
+    
+    ### Note on Linux
+    Linux builds require CGO. You can build from source on Linux:
+    ```bash
+    CGO_ENABLED=1 go build -o jb-embed .
+    ```
+  footer: |
+    ---
+    
+    **Full Changelog**: https://github.com/calobozan/jb-embed/compare/...{{ .Tag }}
