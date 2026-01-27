@@ -10,43 +10,24 @@ before:
     - go mod tidy
 
 builds:
-  - id: macos
-    env:
-      - CGO_ENABLED=1
-    goos:
-      - darwin
-    goarch:
-      - arm64
-      - amd64
-    ldflags:
-      - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.date={{.Date}}
-
-  - id: windows
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
+      - linux
       - windows
+      - darwin
     goarch:
       - amd64
+      - arm64
+    ignore:
+      # Windows ARM64 is rare, skip it
+      - goos: windows
+        goarch: arm64
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
       - -X main.commit={{.Commit}}
       - -X main.date={{.Date}}
-
-  # Linux builds need cross-compilation toolchain for CGO
-  # For now, skip Linux in local builds - use GitHub Actions later
-  # - id: linux
-  #   env:
-  #     - CGO_ENABLED=1
-  #   goos:
-  #     - linux
-  #   goarch:
-  #     - amd64
-  #     - arm64
 
 archives:
   - formats: [tar.gz]
@@ -94,13 +75,7 @@ release:
     # Server mode (for network deployment)
     ./jb-embed serve --port 8420
     ```
-    
-    ### Note on Linux
-    Linux builds require CGO. You can build from source on Linux:
-    ```bash
-    CGO_ENABLED=1 go build -o jb-embed .
-    ```
   footer: |
     ---
     
-    **Full Changelog**: https://github.com/calobozan/jb-embed/compare/...{{ .Tag }}
+    **Full Changelog**: https://github.com/calobozan/jb-embed/compare/v0.1.0...{{ .Tag }}
