@@ -4,6 +4,13 @@ Persistent mode - model stays loaded between calls.
 """
 
 import json
+import os
+import logging
+
+# Suppress progress bars and verbose logging during model load
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+
 from sentence_transformers import SentenceTransformer
 
 # Global state - model loaded once, reused for all calls
@@ -15,6 +22,7 @@ def _ensure_model():
     """Load model if not already loaded."""
     global _model
     if _model is None:
+        # show_progress_bar=False suppresses tqdm during encoding
         _model = SentenceTransformer(_model_name)
     return _model
 
